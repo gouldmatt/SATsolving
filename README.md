@@ -1,4 +1,4 @@
 # SATsolving
 
-# Boolean satisfisibility problem 
+# Boolean satisfiability problem 
 is there an assignment of the variables such that the equation evaluates to true 
