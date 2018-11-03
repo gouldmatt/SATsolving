@@ -5,11 +5,11 @@
 
 using namespace std; 
 
-vector<int> satTest(vector<string>& clauseVec);
-bool checkSol(bitset <1024>& solutionData, vector<string>& clauseVec);
+vector<int> satTest(vector<int>& clauseVec);
+bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
 
 int main(){
-    vector<string> clauseVec; 
+    vector<int> clauseVec; 
     vector<int> solVec;
     string element = " "; 
     ifstream file; 
@@ -21,7 +21,7 @@ int main(){
     // read entire file into vector keeping only num 
     while(file >> element){
         if (element.find_first_not_of ("-0123456789") == string::npos){
-            clauseVec.push_back(element);
+            clauseVec.push_back(stoi(element));
         }
     }
 
@@ -35,8 +35,8 @@ int main(){
     return 0; 
 }
 
-vector<int> satTest(vector<string>& clauseVec){
-    int numVar = stoi(clauseVec[0]);
+vector<int> satTest(vector<int>& clauseVec){
+    int numVar = clauseVec[0];
     int backTrackNum = 1; 
     vector<int> solutionVec;
     bitset <1024> solutionData (numVar); 
@@ -62,8 +62,24 @@ vector<int> satTest(vector<string>& clauseVec){
     return solutionVec; 
 }
 
-bool checkSol(bitset <1024>& solutionData, vector<string>& clauseVec){
-    // for each clause check solution data 
+bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
+    // for each clause check solution data
+    /* 
+    for(int i=1; i<clauseVec.size(); i++){
+        if(clauseVec[i] != 0){
+            if(clauseVec[i] > 0){
+                if(solutionData[clauseVec[i]] == 1){
+                    return true; 
+                } 
+            }else{
+                if(solutionData[clauseVec[i]].flip() == 1){
+                    return true; 
+                } 
+            }
+        }
+    }
+    */
 
-    return true; 
+
+    return false; 
 }
