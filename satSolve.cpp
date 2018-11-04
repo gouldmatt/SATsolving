@@ -8,6 +8,7 @@ using namespace std;
 
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
+bool clauseSat(bitset <1024>& solutionData, vector<int>& clauseVec,int& clauseNum,int& clauseOffset);
 
 int main(){
     vector<int> clauseVec; 
@@ -40,19 +41,22 @@ int main(){
 
 void satTest(vector<int>& clauseVec,vector<int>& solutionVec){
     int numVar = clauseVec[0];
-    int backTrackNum = 1;  
+    long int numPosSol = pow(2,numVar);
+    long int backTrackNum = 1;  
     bitset <1024> solutionData (pow(2,numVar)-1); 
   
     solutionVec.reserve(numVar); 
 
     while(checkSol(solutionData,clauseVec) == false){
-        if(backTrackNum > numVar){
+        if(backTrackNum > numPosSol){
            // equation is not satisfiable 
            cout << "not satisfiable"; 
+           cout << numPosSol << endl; 
            return; 
         }
-        solutionData = bitset<1024> (pow(2,(numVar - backTrackNum))-1); 
+        solutionData = bitset<1024> (pow(2,(numVar))-1-backTrackNum); 
         cout << "backtrack: " << backTrackNum << endl; 
+        cout << solutionData; 
         backTrackNum++; 
     }
 
@@ -70,46 +74,54 @@ void satTest(vector<int>& clauseVec,vector<int>& solutionVec){
 }
 
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
-    int numClause = 0; 
-    int index = 2; 
-    cout << solutionData << endl; 
+    int clauseNum = 0;  
+    int clauseOffset = 2; // start at 2 because of # of clauses /var
 
-    // for each clause check solution data
-    while(numClause < clauseVec[1]){
-        if(clauseVec[index] > 0){
-            if(solutionData.test(clauseVec[index]-1)){
-                while(clauseVec[index] != 0){
-                 
-                    index++;       
+    cout << endl << endl << endl << clauseSat(solutionData,clauseVec,clauseNum,clauseOffset) << endl << endl << endl; 
+
+
+    return clauseSat(solutionData,clauseVec,clauseNum,clauseOffset); 
+}
+
+bool clauseSat(bitset <1024>& solutionData, vector<int>& clauseVec,int& clauseNum,int& clauseOffset){
+    while(clauseOffset < clauseVec.size()){
+       if(clauseVec[clauseOffset] > 0){
+            if(solutionData.test(clauseVec[clauseOffset]-1)){
+                cout << "pos" << endl; 
+                cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
+                cout << "clauseNum: " << clauseNum << endl;
+                cout << "clauseOffset: " << clauseOffset << endl << endl; 
+                // move offset now that clause is sat 
+                while(clauseVec[clauseOffset] != 0){
+                    clauseOffset++;       
                 }
-                numClause++; 
-                cout << endl << "index " << index << endl; 
-                cout << "clause # " << numClause << endl; 
-                if(numClause == clauseVec[1]){
-                    return true; 
-                }
+                clauseOffset++;
+                clauseNum++; 
+                continue;  
             }
-        } else if (clauseVec[index] < 0){
-            if(solutionData.test(-(clauseVec[index]-1)) == false){
-                while(clauseVec[index] != 0){
-                    index++;       
+        } else if (clauseVec[clauseOffset] < 0){
+            if(solutionData.test((-clauseVec[clauseOffset])-1) == false){
+                cout << "neg" << endl; 
+                cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
+                cout << "clauseNum: " << clauseNum << endl;
+                cout << "clauseOffset: " << clauseOffset << endl << endl; 
+                // move offset now that clause is sat 
+                while(clauseVec[clauseOffset] != 0){
+                    clauseOffset++;       
                 }
-                numClause++; 
-                cout << endl << "index " << index << endl; 
-                cout << "clause # " << numClause << endl; 
-                if(numClause == clauseVec[1]){
-                    return true; 
-                }
-                
+                clauseOffset++;
+                clauseNum++; 
+                continue;  
             }
         } else {
-            numClause++; 
-            if(numClause == clauseVec[1]){
-                return false; 
-            }
+            cout << "failed to satisfy clause element: " << clauseVec[clauseOffset] << endl << endl; 
+            return false;  
         }
-        index++;
+        //cout << clauseOffset; 
+        if(clauseOffset == clauseVec[1]){
+            return false; 
+        }
+        clauseOffset++; 
     }
-    
     return true; 
 }
