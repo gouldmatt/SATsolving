@@ -8,14 +8,13 @@ using namespace std;
 
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
-bool clauseSat(bitset <1024>& solutionData, vector<int>& clauseVec,int& clauseNum,int& clauseOffset);
 
 int main(){
     vector<int> clauseVec; 
     vector<int> solVec;
     string element = " "; 
     ifstream file; 
-    file.open("satTest3.CNF");
+    file.open("satTest2.CNF");
     int numVar = 0;
     int numClause = 0; 
     
@@ -24,16 +23,17 @@ int main(){
     while(file >> element){
         if (element.find_first_not_of ("-0123456789") == string::npos){
             clauseVec.push_back(stoi(element));
-            cout << element;
         }
     }
-    cout << endl << endl; 
+    
     satTest(clauseVec,solVec); 
-    cout << endl << endl; 
+   
     if(solVec.size() != 0){
+        cout << "v ";
         for(int i=0; i<solVec.size(); i++){
-            cout << solVec[i]+1 << " "; 
+            cout << solVec[i] << " "; 
         }
+        cout << "0" << endl; 
     }
 
     return 0; 
@@ -50,47 +50,39 @@ void satTest(vector<int>& clauseVec,vector<int>& solutionVec){
     while(checkSol(solutionData,clauseVec) == false){
         if(backTrackNum > numPosSol){
            // equation is not satisfiable 
-           cout << "not satisfiable"; 
-           cout << numPosSol << endl; 
+           cout << "not satisfiable" << endl; 
+            
            return; 
         }
         solutionData = bitset<1024> (pow(2,(numVar))-1-backTrackNum); 
-        cout << "backtrack: " << backTrackNum << endl; 
-        cout << solutionData; 
+        //cout << "backtrack: " << backTrackNum << endl; 
+        
         backTrackNum++; 
     }
 
-    cout << "numVar: " << numVar << endl; 
     // construct solution vector 
-    cout << solutionData; 
-    for(int i=0; i<numVar; i++){
-        if(solutionData.test(i)){
-            solutionVec.push_back(i); 
+    for(int i=1; i<=numVar; i++){
+        if(solutionData.test(i-1)){
+            solutionVec.push_back(i);
         } else {
-            solutionVec.push_back(-i); 
-        } 
+            solutionVec.push_back(-i);
+        }
     }
     return; 
 }
+
 
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     int clauseNum = 0;  
     int clauseOffset = 2; // start at 2 because of # of clauses /var
 
-    cout << endl << endl << endl << clauseSat(solutionData,clauseVec,clauseNum,clauseOffset) << endl << endl << endl; 
-
-
-    return clauseSat(solutionData,clauseVec,clauseNum,clauseOffset); 
-}
-
-bool clauseSat(bitset <1024>& solutionData, vector<int>& clauseVec,int& clauseNum,int& clauseOffset){
     while(clauseOffset < clauseVec.size()){
        if(clauseVec[clauseOffset] > 0){
             if(solutionData.test(clauseVec[clauseOffset]-1)){
-                cout << "pos" << endl; 
-                cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
-                cout << "clauseNum: " << clauseNum << endl;
-                cout << "clauseOffset: " << clauseOffset << endl << endl; 
+                //cout << "pos" << endl; 
+                //cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
+                //cout << "clauseNum: " << clauseNum << endl;
+                //cout << "clauseOffset: " << clauseOffset << endl << endl; 
                 // move offset now that clause is sat 
                 while(clauseVec[clauseOffset] != 0){
                     clauseOffset++;       
@@ -101,10 +93,10 @@ bool clauseSat(bitset <1024>& solutionData, vector<int>& clauseVec,int& clauseNu
             }
         } else if (clauseVec[clauseOffset] < 0){
             if(solutionData.test((-clauseVec[clauseOffset])-1) == false){
-                cout << "neg" << endl; 
-                cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
-                cout << "clauseNum: " << clauseNum << endl;
-                cout << "clauseOffset: " << clauseOffset << endl << endl; 
+                //cout << "neg" << endl; 
+                //cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
+                //cout << "clauseNum: " << clauseNum << endl;
+                //cout << "clauseOffset: " << clauseOffset << endl << endl; 
                 // move offset now that clause is sat 
                 while(clauseVec[clauseOffset] != 0){
                     clauseOffset++;       
@@ -114,7 +106,7 @@ bool clauseSat(bitset <1024>& solutionData, vector<int>& clauseVec,int& clauseNu
                 continue;  
             }
         } else {
-            cout << "failed to satisfy clause element: " << clauseVec[clauseOffset] << endl << endl; 
+            //cout << "failed to satisfy clause element: " << clauseVec[clauseOffset] << endl << endl; 
             return false;  
         }
         //cout << clauseOffset; 
