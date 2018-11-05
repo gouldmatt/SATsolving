@@ -3,20 +3,23 @@
 #include <vector> 
 #include <bitset> 
 #include <cmath> 
+#include <thread>
+#include <mutex> 
 
 using namespace std; 
 
-void satTest(vector<int>& clauseVec, vector<int>& solutionVec);
+std::mutex mtx;
+
+void satTest(vector<int>& clauseVec, vector<int>& solutionVec,int threadNumber);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
 
 int main(){
+    thread threads[4];
     vector<int> clauseVec; 
-    vector<int> solVec;
+    vector<int> solVec[4];
     string element = " "; 
     ifstream file; 
     file.open("satTest2.CNF");
-    int numVar = 0;
-    int numClause = 0; 
     
 
     // read entire file into vector keeping only num 
@@ -26,25 +29,47 @@ int main(){
         }
     }
     
-    satTest(clauseVec,solVec); 
-   
-    if(solVec.size() != 0){
-        cout << "v ";
-        for(int i=0; i<solVec.size(); i++){
-            cout << solVec[i] << " "; 
-        }
-        cout << "0" << endl; 
+    // start multithreading
+    for(int i=0; i< 4; i++){ 
+       threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i); 
     }
 
+    // stop multithreading
+    for(int i=0; i< 4; i++){
+        threads[i].join();
+    }
+    
+    for(int j=0; j < 4; j++){
+        if(solVec[0].size() != 0){
+            cout << "v ";
+            for(int i=0; i<solVec[j].size(); i++){
+            cout << solVec[0][i] << " "; 
+            }
+            cout << "0" << endl; 
+        }
+    }
+    
     return 0; 
 }
 
-void satTest(vector<int>& clauseVec,vector<int>& solutionVec){
+void satTest(vector<int>& clauseVec,vector<int>& solutionVec,int threadNumber){
     int numVar = clauseVec[0];
-    long int numPosSol = pow(2,numVar);
+    long int numPosSol = pow(2,numVar-2);
     long int backTrackNum = 1;  
+
     bitset <1024> solutionData (pow(2,numVar)-1); 
-  
+    if(threadNumber == 0 || threadNumber == 1){
+        solutionData[numVar-1] = 0;
+        solutionData[numVar-2] = threadNumber; 
+    } else {
+        solutionData[numVar-1] = 1;
+        solutionData[numVar-2] = threadNumber - 3;  
+    }
+    mtx.lock(); 
+    //cout << "thread Number: " << threadNumber << endl; 
+    //cout << "solution guess: " << solutionData << endl;
+    mtx.unlock();
+
     solutionVec.reserve(numVar); 
 
     while(checkSol(solutionData,clauseVec) == false){
