@@ -1,0 +1,8 @@
+#!/bin/bash
+# script to remove local backup of git branches
+
+# deletes all local branches except master:
+git branch | grep -v "master" | xargs git branch -D
+
+# deletes copies of remote branches that no longer exist 
+git remote prune origin
