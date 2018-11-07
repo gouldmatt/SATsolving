@@ -19,7 +19,7 @@ int main(){
     vector<int> solVec[4];
     string element = " "; 
     ifstream file; 
-    file.open("satTest2.CNF");
+    file.open("satTest4.CNF");
     
 
     // read entire file into vector keeping only num 
@@ -30,20 +30,20 @@ int main(){
     }
     
     // start multithreading
-    for(int i=0; i< 4; i++){ 
+    for(int i=0; i<4; i++){ 
        threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i); 
     }
 
     // stop multithreading
-    for(int i=0; i< 4; i++){
+    for(int i=0; i<4; i++){
         threads[i].join();
     }
     
     for(int j=0; j < 4; j++){
-        if(solVec[0].size() != 0){
-            cout << "v ";
+        if(solVec[j].size() != 0){
+            cout << "thread: " << j << " says satisfiable with: v ";
             for(int i=0; i<solVec[j].size(); i++){
-            cout << solVec[0][i] << " "; 
+            cout << solVec[j][i] << " "; 
             }
             cout << "0" << endl; 
         }
@@ -55,35 +55,63 @@ int main(){
 void satTest(vector<int>& clauseVec,vector<int>& solutionVec,int threadNumber){
     int numVar = clauseVec[0];
     long int numPosSol = pow(2,numVar-2);
-    long int backTrackNum = 1;  
+    long int backTrackNum = 1; 
+    long int backTrackTrack = 0; 
+    bitset <1024> solutionData (numPosSol-1); 
 
-    bitset <1024> solutionData (pow(2,numVar)-1); 
-    if(threadNumber == 0 || threadNumber == 1){
-        solutionData[numVar-1] = 0;
-        solutionData[numVar-2] = threadNumber; 
+    if(numVar > 1){
+        if(threadNumber == 0 || threadNumber == 1){
+            solutionData[numVar-1] = 0;
+            solutionData[numVar-2] = threadNumber; 
+        } else {
+            solutionData[numVar-1] = 1;
+            solutionData[numVar-2] = threadNumber - 3;  
+        }
     } else {
-        solutionData[numVar-1] = 1;
-        solutionData[numVar-2] = threadNumber - 3;  
+        numPosSol = pow(2,numVar); 
     }
+
+    /*
     mtx.lock(); 
-    //cout << "thread Number: " << threadNumber << endl; 
-    //cout << "solution guess: " << solutionData << endl;
+    cout << "thread Number: " << threadNumber << endl; 
+
+    cout << "solution guess: ";
+    for(int k=0; k<numVar; k++){
+        cout << solutionData[k];
+    }
+    cout << endl; 
+   
     mtx.unlock();
+    */
 
     solutionVec.reserve(numVar); 
-
+    
     while(checkSol(solutionData,clauseVec) == false){
         if(backTrackNum > numPosSol){
-           // equation is not satisfiable 
-           cout << "not satisfiable" << endl; 
+           // equation is not satisfiable
+           mtx.lock(); 
+           cout << "thread: " << threadNumber << " says not satisfiable" << endl; 
+           mtx.unlock(); 
             
            return; 
         }
-        solutionData = bitset<1024> (pow(2,(numVar))-1-backTrackNum); 
-        //cout << "backtrack: " << backTrackNum << endl; 
+        solutionData = bitset<1024> (solutionData.to_ulong()-backTrackNum); 
+        mtx.lock();
+        backTrackTrack++;
+        if(backTrackTrack > 1000000){
+            cout << "backtrack: " << backTrackNum << endl; 
+            backTrackTrack = 0; 
+        }
+        mtx.unlock(); 
         
         backTrackNum++; 
     }
+    
+    /*
+    mtx.lock();
+    cout << "found sol" << endl; 
+    mtx.unlock(); 
+    */
 
     // construct solution vector 
     for(int i=1; i<=numVar; i++){
@@ -93,11 +121,13 @@ void satTest(vector<int>& clauseVec,vector<int>& solutionVec,int threadNumber){
             solutionVec.push_back(-i);
         }
     }
+    
     return; 
 }
 
 
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
+    
     int clauseNum = 0;  
     int clauseOffset = 2; // start at 2 because of # of clauses /var
 

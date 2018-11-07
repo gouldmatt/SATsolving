@@ -4,7 +4,7 @@
 CFLAGS  = -Wall 
 
 output: satSolve.cpp
-	g++ -pthread satSolve.cpp -o output
+	g++ -std=c++11 -pthread satSolve.cpp -o output
 	time ./output
 
 clean:
