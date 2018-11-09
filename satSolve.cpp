@@ -79,8 +79,8 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     long int numPosSol = pow(2,numVar-2);
     long int backTrackNum = 1; 
     bitset <1024> solutionData (numPosSol-1); 
-    time_t previousBacktrackPrint; 
-    time_t currentBacktrackTime; 
+    time_t previousBacktrackPrint = time(&previousBacktrackPrint); 
+    time_t currentBacktrackTime;
     double timeSincePrint = 0.0; 
 
     if(numVar > 3){
@@ -121,22 +121,23 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
            return; 
         }
         solutionData = bitset<1024> (solutionData.to_ulong()-backTrackNum); 
-        mtx.lock();
-            if(foundSol == true){
-                cout << "other thread found solution" << endl; 
-                mtx.unlock(); 
-                return; 
-            }
 
-            time(&currentBacktrackTime);
+        if(foundSol == true){       
+            return; 
+        }
+    
 
-            timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
-            
-            if(timeSincePrint > 2.0){
-                cout << "backtrack: " << backTrackNum << endl; 
-                time(&previousBacktrackPrint); 
-            }
-        mtx.unlock(); 
+        time(&currentBacktrackTime);
+
+        timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
+        
+        if(timeSincePrint > 2){
+            mtx.lock();
+            cout << "thread # " << threadNumber << " backtrack number: " << backTrackNum << endl; 
+            mtx.unlock();
+            time(&previousBacktrackPrint); 
+        }
+     
         
         backTrackNum++; 
     }
