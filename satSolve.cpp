@@ -19,7 +19,7 @@ int main(){
     vector<int> solVec[4];
     string element = " "; 
     ifstream file; 
-    file.open("satTest4.CNF");
+    file.open("satTest.CNF");
     
 
     // read entire file into vector keeping only num 
