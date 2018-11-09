@@ -32,6 +32,7 @@ int main(){
         }
     }
     
+    // only multithread if there is enough variables 
     if(clauseVec[0] > 3){
         cout << "multithreading" << endl; 
         // start multithreading
@@ -113,7 +114,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     
     while(checkSol(solutionData,clauseVec) == false){
         if(backTrackNum > numPosSol){
-           // equation is not satisfiable
            mtx.lock(); 
            cout << "thread: " << threadNumber << " says not satisfiable" << endl; 
            mtx.unlock(); 
