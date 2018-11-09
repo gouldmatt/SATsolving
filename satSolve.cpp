@@ -5,12 +5,13 @@
 #include <cmath> 
 #include <thread>
 #include <mutex> 
+#include <time.h> 
 
 using namespace std; 
 
 std::mutex mtx;
 
-void satTest(vector<int>& clauseVec, vector<int>& solutionVec,int threadNumber);
+void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
 
 int main(){
@@ -19,7 +20,9 @@ int main(){
     vector<int> solVec[4];
     string element = " "; 
     ifstream file; 
-    file.open("satTest.CNF");
+    file.open("satTest5.CNF");
+    bool foundSol; 
+    int i=0; 
     
 
     // read entire file into vector keeping only num 
@@ -29,37 +32,59 @@ int main(){
         }
     }
     
-    // start multithreading
-    for(int i=0; i<4; i++){ 
-       threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i); 
-    }
-
-    // stop multithreading
-    for(int i=0; i<4; i++){
-        threads[i].join();
-    }
-    
-    for(int j=0; j < 4; j++){
-        if(solVec[j].size() != 0){
-            cout << "thread: " << j << " says satisfiable with: v ";
-            for(int i=0; i<solVec[j].size(); i++){
-            cout << solVec[j][i] << " "; 
-            }
-            cout << "0" << endl; 
+    if(clauseVec[0] > 3){
+        cout << "multithreading" << endl; 
+        // start multithreading
+        for(i=0; i<4; i++){ 
+        threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i,std::ref(foundSol)); 
         }
+
+        // stop multithreading
+        for(i=0; i<4; i++){
+            threads[i].join();
+        }
+        
+        for(int j=0; j < 4; j++){
+            if(solVec[j].size() != 0){
+                cout << "thread: " << j << " says satisfiable with: v ";
+                for(int i=0; i<solVec[j].size(); i++){
+                    cout << solVec[j][i] << " "; 
+                }
+                cout << "0" << endl; 
+            }
+        }
+        cout << endl << endl; 
+
+    } else {
+        cout << "single" << endl; 
+
+        satTest(clauseVec,solVec[0],i=0,foundSol);
+        if(solVec[0].size() != 0){
+                cout << "satisfiable: v "; 
+                for(int i=0; i<solVec[0].size(); i++){
+                    cout << solVec[0][i] << " "; 
+                }
+                cout << "0" << endl; 
+        }
+        cout << endl << endl; 
+
     }
     
     return 0; 
 }
 
-void satTest(vector<int>& clauseVec,vector<int>& solutionVec,int threadNumber){
+void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol){
     int numVar = clauseVec[0];
+    //remove 2 variables in possible solution calc so that thread stops after checking its solution space 
     long int numPosSol = pow(2,numVar-2);
     long int backTrackNum = 1; 
-    long int backTrackTrack = 0; 
     bitset <1024> solutionData (numPosSol-1); 
+    time_t previousBacktrackPrint; 
+    time_t currentBacktrackTime; 
+    double timeSincePrint = 0.0; 
 
-    if(numVar > 1){
+    if(numVar > 3){
+        // set the first 2 variables based on thread number 
         if(threadNumber == 0 || threadNumber == 1){
             solutionData[numVar-1] = 0;
             solutionData[numVar-2] = threadNumber; 
@@ -97,21 +122,30 @@ void satTest(vector<int>& clauseVec,vector<int>& solutionVec,int threadNumber){
         }
         solutionData = bitset<1024> (solutionData.to_ulong()-backTrackNum); 
         mtx.lock();
-        backTrackTrack++;
-        if(backTrackTrack > 1000000){
-            cout << "backtrack: " << backTrackNum << endl; 
-            backTrackTrack = 0; 
-        }
+            if(foundSol == true){
+                cout << "other thread found solution" << endl; 
+                mtx.unlock(); 
+                return; 
+            }
+
+            time(&currentBacktrackTime);
+
+            timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
+            
+            if(timeSincePrint > 2.0){
+                cout << "backtrack: " << backTrackNum << endl; 
+                time(&previousBacktrackPrint); 
+            }
         mtx.unlock(); 
         
         backTrackNum++; 
     }
     
-    /*
+
     mtx.lock();
     cout << "found sol" << endl; 
+    foundSol = true; 
     mtx.unlock(); 
-    */
 
     // construct solution vector 
     for(int i=1; i<=numVar; i++){
@@ -129,46 +163,46 @@ void satTest(vector<int>& clauseVec,vector<int>& solutionVec,int threadNumber){
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     
     int clauseNum = 0;  
-    int clauseOffset = 2; // start at 2 because of # of clauses /var
+    int totalOffset = 2; // start at 2 because of # of clauses /var
 
-    while(clauseOffset < clauseVec.size()){
-       if(clauseVec[clauseOffset] > 0){
-            if(solutionData.test(clauseVec[clauseOffset]-1)){
+    while(totalOffset < clauseVec.size()){
+       if(clauseVec[totalOffset] > 0){
+            if(solutionData.test(clauseVec[totalOffset]-1)){
                 //cout << "pos" << endl; 
-                //cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
+                //cout << "clauseVec value: " << clauseVec[totalOffset]-1 << endl; 
                 //cout << "clauseNum: " << clauseNum << endl;
-                //cout << "clauseOffset: " << clauseOffset << endl << endl; 
+                //cout << "totalOffset: " << totalOffset << endl << endl; 
                 // move offset now that clause is sat 
-                while(clauseVec[clauseOffset] != 0){
-                    clauseOffset++;       
+                while(clauseVec[totalOffset] != 0){
+                    totalOffset++;       
                 }
-                clauseOffset++;
+                totalOffset++;
                 clauseNum++; 
                 continue;  
             }
-        } else if (clauseVec[clauseOffset] < 0){
-            if(solutionData.test((-clauseVec[clauseOffset])-1) == false){
+        } else if (clauseVec[totalOffset] < 0){
+            if(solutionData.test((-clauseVec[totalOffset])-1) == false){
                 //cout << "neg" << endl; 
-                //cout << "clauseVec value: " << clauseVec[clauseOffset]-1 << endl; 
+                //cout << "clauseVec value: " << clauseVec[totalOffset]-1 << endl; 
                 //cout << "clauseNum: " << clauseNum << endl;
-                //cout << "clauseOffset: " << clauseOffset << endl << endl; 
+                //cout << "totalOffset: " << totalOffset << endl << endl; 
                 // move offset now that clause is sat 
-                while(clauseVec[clauseOffset] != 0){
-                    clauseOffset++;       
+                while(clauseVec[totalOffset] != 0){
+                    totalOffset++;       
                 }
-                clauseOffset++;
+                totalOffset++;
                 clauseNum++; 
                 continue;  
             }
         } else {
-            //cout << "failed to satisfy clause element: " << clauseVec[clauseOffset] << endl << endl; 
+            //cout << "failed to satisfy clause element: " << clauseVec[totalOffset] << endl << endl; 
             return false;  
         }
         //cout << clauseOffset; 
-        if(clauseOffset == clauseVec[1]){
+        if(totalOffset == clauseVec[1]){
             return false; 
         }
-        clauseOffset++; 
+        totalOffset++; 
     }
     return true; 
 }
