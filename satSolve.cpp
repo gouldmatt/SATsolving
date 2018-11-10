@@ -15,7 +15,6 @@ long int t1BackTrack;
 long int t2BackTrack;
 long int t3BackTrack;
 
-
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
 void printBackTracks(long int& t0BackTrack, 
@@ -90,9 +89,7 @@ int main(int argc, char* argv[]){
                 cout << "0" << endl; 
         }
         cout << endl << endl; 
-
     }
-    
     return 0; 
 }
 
@@ -180,7 +177,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         backTrackNum++; 
     }
     
-
     mtx.lock();
     cout << "found sol" << endl; 
     foundSol = true; 
@@ -193,11 +189,9 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         } else {
             solutionVec.push_back(-i);
         }
-    }
-    
+    } 
     return; 
 }
-
 
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     
@@ -259,7 +253,7 @@ void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2B
 
         timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
         
-        if(timeSincePrint > 2){
+        if(timeSincePrint >= 2){
             backTracksTotal = t0BackTrack + t1BackTrack + t2BackTrack +t3BackTrack;
             cout << "Number of backtracks: " << backTracksTotal << endl; 
             
