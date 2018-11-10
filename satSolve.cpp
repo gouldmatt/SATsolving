@@ -10,20 +10,35 @@
 using namespace std; 
 
 std::mutex mtx;
+long int t0BackTrack;
+long int t1BackTrack;
+long int t2BackTrack;
+long int t3BackTrack;
+
 
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
+void printBackTracks(long int& t0BackTrack, 
+    long int& t1BackTrack, long int& t2BackTrack, long int& t3BackTrack, bool& foundSol);
 
-int main(){
+int main(int argc, char* argv[]){
+
     thread threads[4];
     vector<int> clauseVec; 
     vector<int> solVec[4];
     string element = " "; 
     ifstream file; 
-    file.open("satTest5.CNF");
     bool foundSol; 
     int i=0; 
     
+    //Read in file from command line when running
+    if(argc < 2){
+        cerr << "Must run with a file: ./output <file.CNF>\n";
+        return 1;
+    }
+
+    string fileName = argv[1];
+    file.open(fileName);
 
     // read entire file into vector keeping only num 
     while(file >> element){
@@ -37,13 +52,20 @@ int main(){
         cout << "multithreading" << endl; 
         // start multithreading
         for(i=0; i<4; i++){ 
-        threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i,std::ref(foundSol)); 
+            threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i,std::ref(foundSol)); 
         }
+
+        //start a thread to print number of backtracks to date every two seconds
+        thread timeThread(printBackTracks, 
+            std::ref(t0BackTrack), std::ref(t1BackTrack),
+             std::ref(t2BackTrack), std::ref(t3BackTrack), std::ref(foundSol));
 
         // stop multithreading
         for(i=0; i<4; i++){
             threads[i].join();
         }
+        
+        timeThread.join();
         
         for(int j=0; j < 4; j++){
             if(solVec[j].size() != 0){
@@ -77,21 +99,22 @@ int main(){
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol){
     int numVar = clauseVec[0];
     //remove 2 variables in possible solution calc so that thread stops after checking its solution space 
-    long int numPosSol = pow(2,numVar-2);
+    long int numPosSol = pow(2,numVar)-2;
     long int backTrackNum = 1; 
     bitset <1024> solutionData (numPosSol-1); 
-    time_t previousBacktrackPrint = time(&previousBacktrackPrint); 
-    time_t currentBacktrackTime;
-    double timeSincePrint = 0.0; 
+    // time_t previousBacktrackPrint = time(&previousBacktrackPrint); 
+    // time_t currentBacktrackTime;
+    //double timeSincePrint = 0.0; 
 
     if(numVar > 3){
         // set the first 2 variables based on thread number 
+        //TAYLOR CHANGED INDEX HERE
         if(threadNumber == 0 || threadNumber == 1){
-            solutionData[numVar-1] = 0;
-            solutionData[numVar-2] = threadNumber; 
+            solutionData[0] = 0;
+            solutionData[1] = threadNumber; 
         } else {
-            solutionData[numVar-1] = 1;
-            solutionData[numVar-2] = threadNumber - 3;  
+            solutionData[0] = 1;
+            solutionData[1] = abs(threadNumber - 3);  
         }
     } else {
         numPosSol = pow(2,numVar); 
@@ -126,19 +149,34 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
             return; 
         }
     
-
-        time(&currentBacktrackTime);
-
-        timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
-        
-        if(timeSincePrint > 2){
-            mtx.lock();
-            cout << "thread # " << threadNumber << " backtrack number: " << backTrackNum << endl; 
-            mtx.unlock();
-            time(&previousBacktrackPrint); 
+        //Check thread ID and update globals
+        if(threadNumber == 0){
+            t0BackTrack = backTrackNum;
         }
-     
+
+        if(threadNumber == 1){
+            t1BackTrack = backTrackNum;
+        }
+
+        if(threadNumber == 2){
+            t2BackTrack = backTrackNum;
+        }
+
+        if(threadNumber == 3){
+            t3BackTrack = backTrackNum;
+        }
+
+        // time(&currentBacktrackTime);
+
+        // timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
         
+        // if(timeSincePrint > 2){
+        //     mtx.lock();
+        //     cout << "thread # " << threadNumber << " backtrack number: " << backTrackNum << endl; 
+        //     mtx.unlock();
+        //     time(&previousBacktrackPrint); 
+        // }
+          
         backTrackNum++; 
     }
     
@@ -206,4 +244,26 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
         totalOffset++; 
     }
     return true; 
+}
+
+void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2BackTrack,
+    long int& t3BackTrack, bool& foundSol){
+    //Prints number of backtracks to date every 2 seconds
+    time_t previousBacktrackPrint = time(&previousBacktrackPrint); 
+    time_t currentBacktrackTime;
+    double timeSincePrint = 0.0;
+    long int backTracksTotal = 0;
+
+    while(foundSol == false){
+        time(&currentBacktrackTime);
+
+        timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
+        
+        if(timeSincePrint > 2){
+            backTracksTotal = t0BackTrack + t1BackTrack + t2BackTrack +t3BackTrack;
+            cout << "Number of backtracks: " << backTracksTotal << endl; 
+            
+            time(&previousBacktrackPrint); 
+        }
+    } 
 }
