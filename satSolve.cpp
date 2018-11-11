@@ -103,16 +103,16 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     if(numVar > 3){
         // set the first 2 variables based on thread number 
         if(threadNumber == 0 || threadNumber == 1){
-            solutionData[0] = 0;
-            solutionData[1] = threadNumber; 
+            solutionData[numVar-1] = 0;
+            solutionData[numVar-2] = threadNumber; 
         } else {
-            solutionData[0] = 1;
-            solutionData[1] = abs(threadNumber - 3);  
-        }
+            solutionData[numVar-1] = 1;
+            solutionData[numVar-2] = abs(threadNumber - 3);  
+}
     } else {
         numPosSol = pow(2,numVar); 
     }
-
+    
     solutionVec.reserve(numVar); 
     
     while(checkSol(solutionData,clauseVec) == false){
