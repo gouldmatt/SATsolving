@@ -96,16 +96,12 @@ int main(int argc, char* argv[]){
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol){
     int numVar = clauseVec[0];
     //remove 2 variables in possible solution calc so that thread stops after checking its solution space 
-    long int numPosSol = pow(2,numVar)-2;
+    long int numPosSol = pow(2,numVar-2);
     long int backTrackNum = 1; 
     bitset <1024> solutionData (numPosSol-1); 
-    // time_t previousBacktrackPrint = time(&previousBacktrackPrint); 
-    // time_t currentBacktrackTime;
-    //double timeSincePrint = 0.0; 
 
     if(numVar > 3){
         // set the first 2 variables based on thread number 
-        //TAYLOR CHANGED INDEX HERE
         if(threadNumber == 0 || threadNumber == 1){
             solutionData[0] = 0;
             solutionData[1] = threadNumber; 
@@ -116,19 +112,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     } else {
         numPosSol = pow(2,numVar); 
     }
-
-    /*
-    mtx.lock(); 
-    cout << "thread Number: " << threadNumber << endl; 
-
-    cout << "solution guess: ";
-    for(int k=0; k<numVar; k++){
-        cout << solutionData[k];
-    }
-    cout << endl; 
-   
-    mtx.unlock();
-    */
 
     solutionVec.reserve(numVar); 
     
@@ -162,17 +145,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         if(threadNumber == 3){
             t3BackTrack = backTrackNum;
         }
-
-        // time(&currentBacktrackTime);
-
-        // timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
-        
-        // if(timeSincePrint > 2){
-        //     mtx.lock();
-        //     cout << "thread # " << threadNumber << " backtrack number: " << backTrackNum << endl; 
-        //     mtx.unlock();
-        //     time(&previousBacktrackPrint); 
-        // }
           
         backTrackNum++; 
     }
@@ -201,10 +173,7 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     while(totalOffset < clauseVec.size()){
        if(clauseVec[totalOffset] > 0){
             if(solutionData.test(clauseVec[totalOffset]-1)){
-                //cout << "pos" << endl; 
-                //cout << "clauseVec value: " << clauseVec[totalOffset]-1 << endl; 
-                //cout << "clauseNum: " << clauseNum << endl;
-                //cout << "totalOffset: " << totalOffset << endl << endl; 
+
                 // move offset now that clause is sat 
                 while(clauseVec[totalOffset] != 0){
                     totalOffset++;       
@@ -215,10 +184,7 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
             }
         } else if (clauseVec[totalOffset] < 0){
             if(solutionData.test((-clauseVec[totalOffset])-1) == false){
-                //cout << "neg" << endl; 
-                //cout << "clauseVec value: " << clauseVec[totalOffset]-1 << endl; 
-                //cout << "clauseNum: " << clauseNum << endl;
-                //cout << "totalOffset: " << totalOffset << endl << endl; 
+            
                 // move offset now that clause is sat 
                 while(clauseVec[totalOffset] != 0){
                     totalOffset++;       
@@ -227,11 +193,9 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
                 clauseNum++; 
                 continue;  
             }
-        } else {
-            //cout << "failed to satisfy clause element: " << clauseVec[totalOffset] << endl << endl; 
+        } else { 
             return false;  
-        }
-        //cout << clauseOffset; 
+        } 
         if(totalOffset == clauseVec[1]){
             return false; 
         }
