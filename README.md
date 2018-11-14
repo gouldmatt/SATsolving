@@ -12,4 +12,8 @@ Then to run:
 ```
 ./output <fileName.CNF>
 ```
+If you can't run:
+```
+make clean
+```
 
