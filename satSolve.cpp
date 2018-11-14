@@ -10,18 +10,17 @@
 using namespace std; 
 
 std::mutex mtx;
-/*
+
 long int t0BackTrack;
 long int t1BackTrack;
 long int t2BackTrack;
 long int t3BackTrack;
-bool timerOn = true;
-*/
+bool timerOn;
+
 
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
-//void printBackTracks(long int& t0BackTrack, 
- //   long int& t1BackTrack, long int& t2BackTrack, long int& t3BackTrack);
+void printBackTracks();
 
 int main(int argc, char* argv[]){
 
@@ -30,7 +29,7 @@ int main(int argc, char* argv[]){
     vector<int> solVec[4];
     string element = " "; 
     ifstream file; 
-    bool foundSol; 
+    bool foundSol = false; 
     int i=0; 
     
     //Read in file from command line when running
@@ -60,19 +59,19 @@ int main(int argc, char* argv[]){
             threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i,std::ref(foundSol)); 
         }
 
+        timerOn = true; 
         //start a thread to print number of backtracks to date every two seconds
-        /*
-        thread timeThread(printBackTracks, 
-            std::ref(t0BackTrack), std::ref(t1BackTrack),
-            std::ref(t2BackTrack), std::ref(t3BackTrack));
-            */
+        thread timeThread(printBackTracks);
+            
 
         // stop multithreading
         for(i=0; i<4; i++){
             threads[i].join();
         }
+
+        timerOn = false; 
         
-        //timeThread.join();
+        timeThread.join();
         
         for(int j=0; j < 4; j++){
             if(solVec[j].size() != 0){
@@ -83,7 +82,6 @@ int main(int argc, char* argv[]){
                 cout << "0" << endl; 
             }
         }
-        cout << endl << endl; 
 
     } else {
         cout << "single" << endl; 
@@ -96,7 +94,6 @@ int main(int argc, char* argv[]){
                 }
                 cout << "0" << endl; 
         }
-        cout << endl << endl; 
     }
     return 0; 
 }
@@ -114,7 +111,7 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         if(threadNumber == 0 || threadNumber == 1){
             solutionData[numVar-1] = 0;
             solutionData[numVar-2] = threadNumber; 
-            
+
         } else {
             solutionData[numVar-1] = 1;
             solutionData[numVar-2] = abs(threadNumber - 3); 
@@ -130,21 +127,17 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
             mtx.lock(); 
             cout << "backtrack num: " << backTrackNum << " posSol: " << numPosSol << endl;
             cout << "thread: " << threadNumber << " says not satisfiable" << endl; 
-            //timerOn = false;
             mtx.unlock(); 
             
            return; 
         }
         solutionData = bitset<1024> (solutionData.to_ulong()- 1); 
         
-
-        if(foundSol == true){       
-            cout << "found sol" << endl; 
+        if(foundSol == true){      
             return; 
         }
     
         //Check thread ID and update globals
-        /*
         if(threadNumber == 0){
             t0BackTrack = backTrackNum;
         }
@@ -160,7 +153,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         if(threadNumber == 3){
             t3BackTrack = backTrackNum;
         }
-        */
           
         backTrackNum++; 
     }
@@ -220,9 +212,7 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     return true; 
 }
 
-/*
-void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2BackTrack,
-    long int& t3BackTrack){
+void printBackTracks(){
     //Prints number of backtracks to date every 2 seconds
     time_t previousBacktrackPrint = time(&previousBacktrackPrint); 
     time_t currentBacktrackTime;
@@ -232,8 +222,7 @@ void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2B
     while(timerOn == true){
         time(&currentBacktrackTime);
 
-        timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
-        
+        timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint); 
         if(timeSincePrint >= 2){
             backTracksTotal = t0BackTrack + t1BackTrack + t2BackTrack +t3BackTrack;
             cout << "Number of backtracks: " << backTracksTotal << endl; 
@@ -241,5 +230,6 @@ void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2B
             time(&previousBacktrackPrint); 
         }
     } 
+
+    return; 
 }
-*/
