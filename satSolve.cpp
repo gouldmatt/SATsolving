@@ -10,16 +10,18 @@
 using namespace std; 
 
 std::mutex mtx;
+/*
 long int t0BackTrack;
 long int t1BackTrack;
 long int t2BackTrack;
 long int t3BackTrack;
 bool timerOn = true;
+*/
 
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
-void printBackTracks(long int& t0BackTrack, 
-    long int& t1BackTrack, long int& t2BackTrack, long int& t3BackTrack);
+//void printBackTracks(long int& t0BackTrack, 
+ //   long int& t1BackTrack, long int& t2BackTrack, long int& t3BackTrack);
 
 int main(int argc, char* argv[]){
 
@@ -59,16 +61,18 @@ int main(int argc, char* argv[]){
         }
 
         //start a thread to print number of backtracks to date every two seconds
+        /*
         thread timeThread(printBackTracks, 
             std::ref(t0BackTrack), std::ref(t1BackTrack),
             std::ref(t2BackTrack), std::ref(t3BackTrack));
+            */
 
         // stop multithreading
         for(i=0; i<4; i++){
             threads[i].join();
         }
         
-        timeThread.join();
+        //timeThread.join();
         
         for(int j=0; j < 4; j++){
             if(solVec[j].size() != 0){
@@ -110,10 +114,11 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         if(threadNumber == 0 || threadNumber == 1){
             solutionData[numVar-1] = 0;
             solutionData[numVar-2] = threadNumber; 
+            
         } else {
             solutionData[numVar-1] = 1;
-            solutionData[numVar-2] = abs(threadNumber - 3);  
-}
+            solutionData[numVar-2] = abs(threadNumber - 3); 
+        }
     } else {
         numPosSol = pow(2,numVar); 
     }
@@ -125,18 +130,21 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
             mtx.lock(); 
             cout << "backtrack num: " << backTrackNum << " posSol: " << numPosSol << endl;
             cout << "thread: " << threadNumber << " says not satisfiable" << endl; 
-            timerOn = false;
+            //timerOn = false;
             mtx.unlock(); 
             
            return; 
         }
-        solutionData = bitset<1024> (solutionData.to_ulong()-backTrackNum); 
+        solutionData = bitset<1024> (solutionData.to_ulong()- 1); 
+        
 
         if(foundSol == true){       
+            cout << "found sol" << endl; 
             return; 
         }
     
         //Check thread ID and update globals
+        /*
         if(threadNumber == 0){
             t0BackTrack = backTrackNum;
         }
@@ -152,14 +160,14 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         if(threadNumber == 3){
             t3BackTrack = backTrackNum;
         }
+        */
           
         backTrackNum++; 
     }
-    
+  
     mtx.lock();
-    cout << "found sol" << endl; 
     foundSol = true;
-    timerOn = false;  
+    //timerOn = false;  
     mtx.unlock(); 
 
     // construct solution vector 
@@ -204,7 +212,7 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
         } else { 
             return false;  
         } 
-        if(totalOffset == clauseVec[1]){
+        if(clauseNum == clauseVec[1]){
             return false; 
         }
         totalOffset++; 
@@ -212,6 +220,7 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     return true; 
 }
 
+/*
 void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2BackTrack,
     long int& t3BackTrack){
     //Prints number of backtracks to date every 2 seconds
@@ -233,3 +242,4 @@ void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2B
         }
     } 
 }
+*/
