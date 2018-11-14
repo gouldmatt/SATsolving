@@ -14,11 +14,12 @@ long int t0BackTrack;
 long int t1BackTrack;
 long int t2BackTrack;
 long int t3BackTrack;
+bool timerOn = true;
 
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
 void printBackTracks(long int& t0BackTrack, 
-    long int& t1BackTrack, long int& t2BackTrack, long int& t3BackTrack, bool& foundSol);
+    long int& t1BackTrack, long int& t2BackTrack, long int& t3BackTrack);
 
 int main(int argc, char* argv[]){
 
@@ -45,7 +46,10 @@ int main(int argc, char* argv[]){
             clauseVec.push_back(stoi(element));
         }
     }
-    
+    // for(int k = 0; k<clauseVec.size(); k++){
+    //     cout << clauseVec[k] << endl;
+    // }
+
     // only multithread if there is enough variables 
     if(clauseVec[0] > 3){
         cout << "multithreading" << endl; 
@@ -57,7 +61,7 @@ int main(int argc, char* argv[]){
         //start a thread to print number of backtracks to date every two seconds
         thread timeThread(printBackTracks, 
             std::ref(t0BackTrack), std::ref(t1BackTrack),
-             std::ref(t2BackTrack), std::ref(t3BackTrack), std::ref(foundSol));
+            std::ref(t2BackTrack), std::ref(t3BackTrack));
 
         // stop multithreading
         for(i=0; i<4; i++){
@@ -97,6 +101,7 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     int numVar = clauseVec[0];
     //remove 2 variables in possible solution calc so that thread stops after checking its solution space 
     long int numPosSol = pow(2,numVar-2);
+    //long int numRealSols = pow(2,numVar);
     long int backTrackNum = 1; 
     bitset <1024> solutionData (numPosSol-1); 
 
@@ -117,9 +122,11 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     
     while(checkSol(solutionData,clauseVec) == false){
         if(backTrackNum > numPosSol){
-           mtx.lock(); 
-           cout << "thread: " << threadNumber << " says not satisfiable" << endl; 
-           mtx.unlock(); 
+            mtx.lock(); 
+            cout << "backtrack num: " << backTrackNum << " posSol: " << numPosSol << endl;
+            cout << "thread: " << threadNumber << " says not satisfiable" << endl; 
+            timerOn = false;
+            mtx.unlock(); 
             
            return; 
         }
@@ -151,7 +158,8 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     
     mtx.lock();
     cout << "found sol" << endl; 
-    foundSol = true; 
+    foundSol = true;
+    timerOn = false;  
     mtx.unlock(); 
 
     // construct solution vector 
@@ -161,7 +169,7 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         } else {
             solutionVec.push_back(-i);
         }
-    } 
+    }   
     return; 
 }
 
@@ -169,7 +177,7 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     
     int clauseNum = 0;  
     int totalOffset = 2; // start at 2 because of # of clauses /var
-
+    //cout << "testing sol\n";
     while(totalOffset < clauseVec.size()){
        if(clauseVec[totalOffset] > 0){
             if(solutionData.test(clauseVec[totalOffset]-1)){
@@ -205,14 +213,14 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
 }
 
 void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2BackTrack,
-    long int& t3BackTrack, bool& foundSol){
+    long int& t3BackTrack){
     //Prints number of backtracks to date every 2 seconds
     time_t previousBacktrackPrint = time(&previousBacktrackPrint); 
     time_t currentBacktrackTime;
     double timeSincePrint = 0.0;
     long int backTracksTotal = 0;
 
-    while(foundSol == false){
+    while(timerOn == true){
         time(&currentBacktrackTime);
 
         timeSincePrint = difftime(currentBacktrackTime,previousBacktrackPrint);
