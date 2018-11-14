@@ -17,7 +17,6 @@ long int t2BackTrack;
 long int t3BackTrack;
 bool timerOn;
 
-
 void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber, bool& foundSol);
 bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec);
 void printBackTracks();
@@ -47,9 +46,6 @@ int main(int argc, char* argv[]){
             clauseVec.push_back(stoi(element));
         }
     }
-    // for(int k = 0; k<clauseVec.size(); k++){
-    //     cout << clauseVec[k] << endl;
-    // }
 
     // only multithread if there is enough variables 
     if(clauseVec[0] > 3){
@@ -63,7 +59,6 @@ int main(int argc, char* argv[]){
         //start a thread to print number of backtracks to date every two seconds
         thread timeThread(printBackTracks);
             
-
         // stop multithreading
         for(i=0; i<4; i++){
             threads[i].join();
@@ -102,7 +97,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     int numVar = clauseVec[0];
     //remove 2 variables in possible solution calc so that thread stops after checking its solution space 
     long int numPosSol = pow(2,numVar-2);
-    //long int numRealSols = pow(2,numVar);
     long int backTrackNum = 1; 
     bitset <1024> solutionData (numPosSol-1); 
 
@@ -125,8 +119,7 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     while(checkSol(solutionData,clauseVec) == false){
         if(backTrackNum > numPosSol){
             mtx.lock(); 
-            cout << "backtrack num: " << backTrackNum << " posSol: " << numPosSol << endl;
-            cout << "thread: " << threadNumber << " says not satisfiable" << endl; 
+            cout << "thread " << threadNumber << " says not satisfiable" << endl; 
             mtx.unlock(); 
             
            return; 
@@ -158,8 +151,7 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     }
   
     mtx.lock();
-    foundSol = true;
-    //timerOn = false;  
+    foundSol = true;  
     mtx.unlock(); 
 
     // construct solution vector 
@@ -177,7 +169,7 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     
     int clauseNum = 0;  
     int totalOffset = 2; // start at 2 because of # of clauses /var
-    //cout << "testing sol\n";
+
     while(totalOffset < clauseVec.size()){
        if(clauseVec[totalOffset] > 0){
             if(solutionData.test(clauseVec[totalOffset]-1)){
