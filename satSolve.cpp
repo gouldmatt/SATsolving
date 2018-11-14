@@ -67,11 +67,11 @@ int main(int argc, char* argv[]){
             threads[i].join();
         }
         
-        //timeThread.join();
+        timeThread.join();
         
         for(int j=0; j < 4; j++){
             if(solVec[j].size() != 0){
-                cout << "thread: " << j << " says satisfiable with: v ";
+                cout << "thread " << j << " says satisfiable with: v ";
                 for(int i=0; i<solVec[j].size(); i++){
                     cout << solVec[j][i] << " "; 
                 }
@@ -120,6 +120,7 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     solutionVec.reserve(numVar); 
     
     while(checkSol(solutionData,clauseVec) == false){
+        cout << backTrackNum << endl;
         if(backTrackNum > numPosSol){
             mtx.lock(); 
             cout << "backtrack num: " << backTrackNum << " posSol: " << numPosSol << endl;
@@ -131,13 +132,11 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
         }
         solutionData = bitset<1024> (solutionData.to_ulong()- 1); 
         
-
         if(foundSol == true){        
             return; 
         }
     
         //Check thread ID and update globals
-        
         if(threadNumber == 0){
             t0BackTrack = backTrackNum;
         }
@@ -154,7 +153,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
             t3BackTrack = backTrackNum;
         }
         
-          
         backTrackNum++; 
     }
   
@@ -212,7 +210,6 @@ bool checkSol(bitset <1024>& solutionData, vector<int>& clauseVec){
     }
     return true; 
 }
-
 
 void printBackTracks(long int& t0BackTrack, long int& t1BackTrack, long int& t2BackTrack,
     long int& t3BackTrack){
