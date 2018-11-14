@@ -49,7 +49,6 @@ int main(int argc, char* argv[]){
 
     // only multithread if there is enough variables 
     if(clauseVec[0] > 3){
-        cout << "multithreading" << endl; 
         // start multithreading
         for(i=0; i<4; i++){ 
             threads[i] = thread(satTest,std::ref(clauseVec),std::ref(solVec[i]),i,std::ref(foundSol)); 
@@ -67,10 +66,14 @@ int main(int argc, char* argv[]){
         timerOn = false; 
         
         timeThread.join();
+
+        if(solVec[0].size() == 0 && solVec[1].size() == 0 && solVec[2].size() == 0 && solVec[3].size() == 0){
+            cout << "not satisfiable";
+        }
         
         for(int j=0; j < 4; j++){
             if(solVec[j].size() != 0){
-                cout << "thread: " << j << " says satisfiable with: v ";
+                cout << "satisfiable: v ";
                 for(int i=0; i<solVec[j].size(); i++){
                     cout << solVec[j][i] << " "; 
                 }
@@ -79,7 +82,6 @@ int main(int argc, char* argv[]){
         }
 
     } else {
-        cout << "single" << endl; 
 
         satTest(clauseVec,solVec[0],i=0,foundSol);
         if(solVec[0].size() != 0){
@@ -88,6 +90,8 @@ int main(int argc, char* argv[]){
                     cout << solVec[0][i] << " "; 
                 }
                 cout << "0" << endl; 
+        } else {
+            cout << "not satisfiable";
         }
     }
     return 0; 
@@ -118,10 +122,6 @@ void satTest(vector<int>& clauseVec, vector<int>& solutionVec, int threadNumber,
     
     while(checkSol(solutionData,clauseVec) == false){
         if(backTrackNum > numPosSol){
-            mtx.lock(); 
-            cout << "thread " << threadNumber << " says not satisfiable" << endl; 
-            mtx.unlock(); 
-            
            return; 
         }
         solutionData = bitset<1024> (solutionData.to_ulong()- 1); 
