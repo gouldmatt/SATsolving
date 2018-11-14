@@ -14,7 +14,7 @@ int main(){
     vector<int> solVec;
     string element = " "; 
     ifstream file; 
-    file.open("satTest3.CNF");
+    file.open("tt1.CNF");
     int numVar = 0;
     int numClause = 0; 
     
